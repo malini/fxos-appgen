@@ -68,3 +68,24 @@ https://mxr.mozilla.org/mozilla-b2g28_v1_3/source/dom/messages/SystemMessagePerm
 
 For trunk builds:
 https://mxr.mozilla.org/mozilla-central/source/dom/messages/SystemMessagePermissionsChecker.jsm#29 
+
+Datastore Access
+----------------
+
+If your app needs access to a datastore, please add it to your permissions
+file as either "datastore-owned" or "datastore-access" as needed, like so::
+
+  {
+    "permissions": {
+      "sms": {}
+    },
+    "messages": [
+      { "sms-delivery-success": "/index.html" }
+    ],
+    "datastores-owned": {
+        "download_store": {
+          "access": "readwrite",
+          "description": "Stores successful downloads"
+        }
+    }
+  }

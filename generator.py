@@ -25,7 +25,7 @@ def main(options, args):
 
     manifest["permissions"] = permissions["permissions"]
     # Check if user provided messages
-    if hasattr(permissions, "messages"):
+    if "messages" in permissions:
         manifest["messages"] = permissions["messages"]
     else:
         launch_path = manifest["launch_path"]
@@ -42,7 +42,7 @@ def main(options, args):
             for message in messages:
                 manifest["messages"].append({message: launch_path})
 
-        # Add general messages
+        # Add general messages for the default case
         add_messages(all_messages["general"], manifest)
 
         #TODO: readwrite should be accounted for in settings!
@@ -62,10 +62,10 @@ def main(options, args):
             else:
                 add_messages(related_messages, manifest)
                 
-    if hasattr(permissions, "datastore-access"):
-        manifest["datastore-access"] = permissions["datastore-access"]
-    if hasattr(permissions, "datastore-owned"):
-        manifest["datastore-owned"] = permissions["datastore-owned"]
+    if "datastores-access" in permissions:
+        manifest["datastores-access"] = permissions["datastores-access"]
+    if "datastores-owned" in permissions:
+        manifest["datastores-owned"] = permissions["datastores-owned"]
     import pdb;pdb.set_trace()
 
 def install_app():
