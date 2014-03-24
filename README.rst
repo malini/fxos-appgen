@@ -25,12 +25,9 @@ These files contain the full list of permissions available for their respective
 FxOS versions. Use these files as references for your own permissions file.
 
 For example, if I wanted to have an app with only "read" access to "contacts"
-for v1.3, my permissions file will only contain this: 
-
-{
-  "permissions": {
-    "alarms": {}
-   }
-}
-
-That's all that is needed
+for v1.3, my permissions file will only contain this::
+  {
+    "permissions": {
+      "alarms": {}
+    }
+  }
