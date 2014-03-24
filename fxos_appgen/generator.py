@@ -18,11 +18,15 @@ def main(options, args):
 
     manifest_path = "%s/manifest.webapp" % (options.version)
     manifest_path = os.path.sep.join([os.getcwd(),
-                                      'references',
+                                      'resources',
                                       manifest_path])
     with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
+    manifest["name"] = app_name
+    manifest["type"] = options.type
+    if "description" in permissions:
+        manifest["description"] = permissions["description"]
     manifest["permissions"] = permissions["permissions"]
     # Check if user provided messages
     if "messages" in permissions:
@@ -32,7 +36,7 @@ def main(options, args):
         all_messages = None
         messages_path = "%s/messages.json" % (options.version)
         messages_path = os.path.sep.join([os.getcwd(),
-                                          'references',
+                                          'resources',
                                            messages_path])
 
         with open(messages_path, "r") as f:
@@ -66,6 +70,11 @@ def main(options, args):
         manifest["datastores-access"] = permissions["datastores-access"]
     if "datastores-owned" in permissions:
         manifest["datastores-owned"] = permissions["datastores-owned"]
+
+    # create the app zip
+    app_path = options.app_path
+    if not app_path:
+        app_path = os.path.sep.join([os.getcwd(), "app.zip"])
     import pdb;pdb.set_trace()
 
 def install_app():
@@ -108,18 +117,18 @@ if __name__ == "__main__":
     parser.add_option("--adb-path", dest="adb_path",
                         help="path to adb executable. If not passed, we assume"\
                         " that 'adb' is on the path")
-    parser.add_option("--install", dest="install", default=False,
-                        action="store_true", help="If passed, the app will be" \
-                        " installed on your phone")
-    parser.add_option("--certified", dest="cert", default=False,
-                        action="store_true", help="If passed, the app will be" \
-                        " marked as a 'certified' app.")
-    parser.add_option("--app-path", dest="appzip",
+    parser.add_option("--app-path", dest="app_path",
                         help="If passed, the app's zip file will be stored at" \
                         " the given filepath. Otherwise, it will be in the"\
                         " current working directory as app.zip")
+    parser.add_option("--install", dest="install", default=False,
+                        action="store_true", help="If passed, the app will be" \
+                        " installed on your phone")
+    parser.add_option("--type", dest="type", default="certified",
+                        help="Application type, either 'certified'," \
+                        " 'privileged' or 'web'. Defaults to 'certified'")
     parser.add_option("--version", dest="version", default="1.3",
-                        help="FxOS version. Default is 1.3")
+                        help="FxOS version. Defaults to 1.3")
     (options, args) = parser.parse_args()
     if len(args) != 2:
         print "Please pass in the app_name and permission_file"

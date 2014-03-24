@@ -89,3 +89,17 @@ file as either "datastore-owned" or "datastore-access" as needed, like so::
         }
     }
   }
+
+Description
+-----------
+
+You may customize the description of your app. Add a "description" section
+to your permissions file with the desired text. Example::
+  {
+    "permissions": {
+      "sms": {}
+    },
+    "description": "My test application"
+  }
+
+By default, we provide the description for your app as "Generated app".

@@ -1,18 +1,11 @@
 {
   "name": "",
   "type": "",
-  "description": "",
+  "description": "Generated app",
   "launch_path": "/index.html",
   "developer": {
     "name": "The A-team",
     "url": "https://wiki.mozilla.org/Auto-tools"
   },
-  "locales": {
-    "en-US": {
-      "name": "",
-      "description": ""
-    }
-  },
-  "messages": [],
-  "default_locale": "en-US"
+  "messages": []
 }
