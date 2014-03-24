@@ -14,7 +14,7 @@ FIXME: more detail needed
 Setup and Usage
 ===============
 
-TBA
+FIXME: add info
 
 Declaring Permissions
 ---------------------
