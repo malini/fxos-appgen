@@ -28,6 +28,12 @@ For example, if I wanted to have an app with only "read" access to "contacts"
 for v1.3, my permissions file will only contain this::
   {
     "permissions": {
-      "alarms": {}
+      "contacts":{ "access": "readonly" },
     }
   }
+
+The "access" options take either "readonly", "readwrite", "readcreate" and
+"createonly".
+
+For more information on permissions, please see 
+https://developer.mozilla.org/en-US/Apps/Build/App_permissions
