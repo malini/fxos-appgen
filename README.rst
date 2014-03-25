@@ -7,17 +7,60 @@ A tool to generate an FxOS application with any given permissions
 Requirements
 ============
 
-Your phone must have Marionette installed on it and running on port 2828
+Your phone must have Marionette installed on it and running on port 2828.
 
-FIXME: more detail needed
+You must also have 'adb' installed.
 
-Setup and Usage
-===============
+If you need to install adb, see
+https://developer.mozilla.org/en-US/Firefox_OS/Debugging/Installing_ADB.
 
-FIXME: add info
+Once installed, add adb to your PATH in your ~/.bashrc
+or equivalent file, by adding the following line to the file
+(replacing $SDK_HOME with the location of the android sdk):
 
-Declaring Permissions
----------------------
+    PATH=$SDK_HOME:$PATH
+
+Setup
+=====
+
+You should set up and run this tool inside a virtual environment.  From the
+root directory of your source checkout, run::
+
+    virtualenv venv
+
+Then activate the virtualenv::
+
+    source bin/activate
+
+To install::
+
+    python setup.py install
+
+Usage
+=====
+
+Once installed, you will have access to 'fxos_appgen' from the command line.
+
+You can run it like so::
+
+    fxos_appgen [options] app_name details_file
+
+By default, it assumes 'adb' is on your path and will generate a v1.3 certified
+app named 'app.zip' in your current working directory. It will not install the
+app by default.
+
+To modify this behaviour, use the options listed here::
+
+    fxos_appgen --help
+
+Details File
+================
+
+The details_file must contain the permissions, and may contain the optional
+data.
+
+Permissions (required)
+----------------------
 
 To set permissions on your application, you need to pass in a JSON file 
 containing the permissions you wish to include.
@@ -40,8 +83,8 @@ The "access" options take either "readonly", "readwrite", "readcreate" and
 For more information on permissions, please see 
 https://developer.mozilla.org/en-US/Apps/Build/App_permissions
 
-System Messages
----------------
+System Messages (optional)
+-------------------------
 
 Certain permissions require you to direct system messages to a particular page
 in your app. For example, if you have "sms" as a permission, then you likely
@@ -69,8 +112,8 @@ https://mxr.mozilla.org/mozilla-b2g28_v1_3/source/dom/messages/SystemMessagePerm
 For trunk builds:
 https://mxr.mozilla.org/mozilla-central/source/dom/messages/SystemMessagePermissionsChecker.jsm#29 
 
-Datastore Access
-----------------
+Datastore Access (optional)
+--------------------------
 
 If your app needs access to a datastore, please add it to your permissions
 file as either "datastore-owned" or "datastore-access" as needed, like so::
@@ -90,8 +133,8 @@ file as either "datastore-owned" or "datastore-access" as needed, like so::
     }
   }
 
-Description
------------
+Description (optional)
+----------------------
 
 You may customize the description of your app. Add a "description" section
 to your permissions file with the desired text. Example::
