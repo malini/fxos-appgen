@@ -6,6 +6,7 @@ from optparse import OptionParser
 import os
 import pkg_resources
 import sys
+from zipfile import ZipFile
 
 APP_TYPES = ["certified", "web", "privileged"]
 
@@ -47,13 +48,19 @@ def cli():
     manifest_path = "%s/manifest.webapp" % (options.version)
     manifest_path = pkg_resources.resource_filename(__name__,
                                                     os.path.sep.join(
-                                                    ['resources',
+                                                    ["resources",
                                                     manifest_path]))
     with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
-    create_manifest(app_name, permissions, manifest, options.type,
-                    options.version, options.app_path)
+    manifest = create_manifest(app_name, permissions, manifest, options.type,
+                               options.version, options.app_path)
+
+    #TODO : ask for workingdir for temp files
+    package_app(manifest, options.app_path)
+
+    if options.install:
+        install_app(options.app_path)
 
 def create_manifest(app_name, permissions, manifest, app_type, version, path):
     manifest["name"] = app_name
@@ -75,7 +82,7 @@ def create_manifest(app_name, permissions, manifest, app_type, version, path):
         messages_path = "%s/messages.json" % (version)
         messages_path = pkg_resources.resource_filename(__name__,
                                                         os.path.sep.join(
-                                                        ['resources',
+                                                        ["resources",
                                                           messages_path]))
 
         with open(messages_path, "r") as f:
@@ -88,7 +95,6 @@ def create_manifest(app_name, permissions, manifest, app_type, version, path):
         # Add general messages for the default case
         add_messages(all_messages["general"], manifest)
 
-        #TODO: readwrite should be accounted for in settings!
         for permission in manifest["permissions"]:
             related_messages = all_messages[permission]
             # If we have a dictionary, then we should apply the messages if
@@ -110,11 +116,28 @@ def create_manifest(app_name, permissions, manifest, app_type, version, path):
     if "datastores-owned" in permissions:
         manifest["datastores-owned"] = permissions["datastores-owned"]
 
-    # create the app zip
+    return manifest
+
+
+def package_app(manifest, path):
+    # create the manifest.webapp file
+    manifest_path = os.path.sep.join([os.getcwd(), "manifest.webapp"])
+    manifest_file = open(manifest_path, "w")
+    manifest_file.write(json.dumps(manifest, 
+                        indent=4, separators=(',', ': ')))
+    manifest_file.close()
+
+    index_html = pkg_resources.resource_filename(__name__,
+                                                 os.path.sep.join(
+                                                 ["resources",
+                                                  "index.html"]))
+    # create the app.zip
     app_path = path
     if not app_path:
         app_path = os.path.sep.join([os.getcwd(), "app.zip"])
-    import pdb;pdb.set_trace()
+    with ZipFile(app_path, "w") as zip_file:
+        zip_file.write(index_html, "index.html")
+        zip_file.write(manifest_path, "manifest.webapp")
 
 def install_app():
     print "Pushing app to device"
