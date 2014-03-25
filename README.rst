@@ -59,7 +59,11 @@ Details File
 The details_file must contain the permissions, and may contain the optional
 data.
 
-Permissions (required)
+This file is required, unless you use the --all-permissions option. If you use 
+--all-permissions, then you may pass in this file to define the other optional
+fields, but the 'permissions' section of the details_file will be ignored.
+
+Permissions (required unless --all-permissions option is used)
 ----------------------
 
 To set permissions on your application, you need to pass in a JSON file 

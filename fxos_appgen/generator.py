@@ -15,7 +15,7 @@ def cli():
                                 "permission_file", description="app_name "\
                                 "is the name of the app you want to generate " \
                                 "and permission_file is the path to the " \
-                                "permissions file.")
+                                "details file.")
     # TODO: take in device serial and marionette port, though likely won't be useful
     parser.add_option("--adb-path", dest="adb_path",
                         help="path to adb executable. If not passed, we assume"\
@@ -32,17 +32,44 @@ def cli():
                         " 'privileged' or 'web'. Defaults to 'certified'")
     parser.add_option("--version", dest="version", default="1.3",
                         help="FxOS version. Defaults to 1.3")
+    parser.add_option("--all-permissions", dest="all_perm", default=False,
+                        action="store_true",
+                        help="If this is passed, all permissions will be" \
+                             " given to the app, ignoring any permission in" \
+                             " the details file")
     (options, args) = parser.parse_args()
-    if len(args) != 2:
-        print "Please pass in the app_name and permission_file"
+    if (options.all_perm and len(args) not in [1,2]) or \
+        (not options.all_perm and len(args) != 2):
+        print "Please pass in the app_name and details_file"
+        print "or just app_name if --all-permissions option is used"
         print "Run with --help for more information"
         sys.exit(1)
 
     app_name = args[0]
-    permissions = None
-    permissions_file = args[1]
-    with open(permissions_file, "r") as f:
-        permissions = json.load(f)
+    details = None
+    details_file = None
+    if len(args) == 2:
+        details_file = args[1]
+    if options.all_perm:
+        perms = None
+        all_perms_file = pkg_resources.resource_filename(__name__,
+                                                os.path.sep.join(
+                                                ["resources",
+                                                 "%s" % options.version,
+                                                 "complete_permissions.json"
+                                                 ]))
+        with open(all_perms_file, "r") as f:
+            perms = json.load(f)
+        if details_file:
+            #User has provided us with a details_file
+            with open(details_file, "r") as f:
+                details = json.load(f)
+            details["permissions"] = perms["permissions"]
+        else:
+            details = perms
+    else:
+        with open(details_file, "r") as f:
+            details = json.load(f)
 
     manifest = None
     manifest_path = "%s/manifest.webapp" % (options.version)
@@ -54,7 +81,7 @@ def cli():
         manifest = json.load(f)
 
     print "Creating manifest"
-    manifest = create_manifest(app_name, permissions, manifest, options.type,
+    manifest = create_manifest(app_name, details, manifest, options.type,
                                options.version)
 
     #TODO : ask for workingdir for temp files
@@ -67,7 +94,7 @@ def cli():
         print "The application should be on your phone"
     print "Done."
 
-def create_manifest(app_name, permissions, manifest, app_type, version):
+def create_manifest(app_name, details, manifest, app_type, version):
     manifest["name"] = app_name
     app_type = app_type.lower()
     if app_type not in APP_TYPES:
@@ -75,12 +102,12 @@ def create_manifest(app_name, permissions, manifest, app_type, version):
                   APP_TYPES)
         sys.exit(1)
     manifest["type"] = app_type
-    if "description" in permissions:
-        manifest["description"] = permissions["description"]
-    manifest["permissions"] = permissions["permissions"]
+    if "description" in details:
+        manifest["description"] = details["description"]
+    manifest["permissions"] = details["permissions"]
     # Check if user provided messages
-    if "messages" in permissions:
-        manifest["messages"] = permissions["messages"]
+    if "messages" in details:
+        manifest["messages"] = details["messages"]
     else:
         launch_path = manifest["launch_path"]
         all_messages = None
@@ -101,25 +128,26 @@ def create_manifest(app_name, permissions, manifest, app_type, version):
         add_messages(all_messages["general"], manifest)
 
         for permission in manifest["permissions"]:
-            related_messages = all_messages[permission]
-            # If we have a dictionary, then we should apply the messages if
-            # we have the appropriate access level
-            if type(related_messages) is dict:
-                level = manifest["permissions"][permission]["access"]
-                for key in related_messages:
-                    # use "in" to allow us to use "read" key on both 
-                    # "readwrite", "readonly" and "read".
-                    if key in level:
-                        messages = related_messages[key]
-                        add_messages(messages, manifest)
-                        break
-            else:
-                add_messages(related_messages, manifest)
+            if permission in all_messages:
+                related_messages = all_messages[permission]
+                # If we have a dictionary, then we should apply the messages if
+                # we have the appropriate access level
+                if type(related_messages) is dict:
+                    level = manifest["permissions"][permission]["access"]
+                    for key in related_messages:
+                        # use "in" to allow us to use "read" key on both 
+                        # "readwrite", "readonly" and "read".
+                        if key in level:
+                            messages = related_messages[key]
+                            add_messages(messages, manifest)
+                            break
+                else:
+                    add_messages(related_messages, manifest)
                 
-    if "datastores-access" in permissions:
-        manifest["datastores-access"] = permissions["datastores-access"]
-    if "datastores-owned" in permissions:
-        manifest["datastores-owned"] = permissions["datastores-owned"]
+    if "datastores-access" in details:
+        manifest["datastores-access"] = details["datastores-access"]
+    if "datastores-owned" in details:
+        manifest["datastores-owned"] = details["datastores-owned"]
 
     return manifest
 
