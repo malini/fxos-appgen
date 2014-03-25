@@ -138,6 +138,7 @@ def package_app(manifest, path):
     with ZipFile(app_path, "w") as zip_file:
         zip_file.write(index_html, "index.html")
         zip_file.write(manifest_path, "manifest.webapp")
+    os.remove(manifest_path)
 
 def install_app():
     print "Pushing app to device"
