@@ -2,7 +2,8 @@
 FxOS App Generator
 ==================
 
-A tool to generate an FxOS application with any given permissions
+A tool to generate, and optionally install, an FxOS application with any given
+permissions
 
 Requirements
 ============
