@@ -1,2 +1,2 @@
 recursive-include fxos_appgen/resources *
-recursive-include fxos_appgen/app_install.js *
+include fxos_appgen/app_install.js
