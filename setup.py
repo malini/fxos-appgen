@@ -22,4 +22,8 @@ setup(name='fxos_appgen',
       include_package_data=True,
       zip_safe=False,
       install_requires=deps,
-      entry_points='')
+      entry_points="""
+      # -*- Entry points: -*-
+      [console_scripts]
+      fxos_appgen = fxos_appgen.generator:cli
+      """)
