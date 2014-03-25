@@ -4,27 +4,65 @@ import mozdevice
 import json
 from optparse import OptionParser
 import os
+import pkg_resources
 import sys
 
+APP_TYPES = ["certified", "web", "privileged"]
 
-def main(options, args):
+def cli():
+    parser = OptionParser(usage="usage: %prog [options] app_name " \
+                                "permission_file", description="app_name "\
+                                "is the name of the app you want to generate " \
+                                "and permission_file is the path to the " \
+                                "permissions file.")
+    # TODO: take in device serial and marionette port, though likely won't be useful
+    parser.add_option("--adb-path", dest="adb_path",
+                        help="path to adb executable. If not passed, we assume"\
+                        " that 'adb' is on the path")
+    parser.add_option("--app-path", dest="app_path",
+                        help="If passed, the app's zip file will be stored at" \
+                        " the given filepath. Otherwise, it will be in the"\
+                        " current working directory as app.zip")
+    parser.add_option("--install", dest="install", default=False,
+                        action="store_true", help="If passed, the app will be" \
+                        " installed on your phone")
+    parser.add_option("--type", dest="type", default="certified",
+                        help="Application type, either 'certified'," \
+                        " 'privileged' or 'web'. Defaults to 'certified'")
+    parser.add_option("--version", dest="version", default="1.3",
+                        help="FxOS version. Defaults to 1.3")
+    (options, args) = parser.parse_args()
+    if len(args) != 2:
+        print "Please pass in the app_name and permission_file"
+        print "Run with --help for more information"
+        sys.exit(1)
+
     app_name = args[0]
-    permissions_file = args[1]
     permissions = None
-    manifest = None
-
+    permissions_file = args[1]
     with open(permissions_file, "r") as f:
         permissions = json.load(f)
 
+    manifest = None
     manifest_path = "%s/manifest.webapp" % (options.version)
-    manifest_path = os.path.sep.join([os.getcwd(),
-                                      'resources',
-                                      manifest_path])
+    manifest_path = pkg_resources.resource_filename(__name__,
+                                                    os.path.sep.join(
+                                                    ['resources',
+                                                    manifest_path]))
     with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
+    create_manifest(app_name, permissions, manifest, options.type,
+                    options.version, options.app_path)
+
+def create_manifest(app_name, permissions, manifest, app_type, version, path):
     manifest["name"] = app_name
-    manifest["type"] = options.type
+    app_type = app_type.lower()
+    if app_type not in APP_TYPES:
+        raise Exception("Need to pass in one of the following app types: %s" % 
+                  APP_TYPES)
+        sys.exit(1)
+    manifest["type"] = app_type
     if "description" in permissions:
         manifest["description"] = permissions["description"]
     manifest["permissions"] = permissions["permissions"]
@@ -34,10 +72,11 @@ def main(options, args):
     else:
         launch_path = manifest["launch_path"]
         all_messages = None
-        messages_path = "%s/messages.json" % (options.version)
-        messages_path = os.path.sep.join([os.getcwd(),
-                                          'resources',
-                                           messages_path])
+        messages_path = "%s/messages.json" % (version)
+        messages_path = pkg_resources.resource_filename(__name__,
+                                                        os.path.sep.join(
+                                                        ['resources',
+                                                          messages_path]))
 
         with open(messages_path, "r") as f:
             all_messages = json.load(f)
@@ -72,7 +111,7 @@ def main(options, args):
         manifest["datastores-owned"] = permissions["datastores-owned"]
 
     # create the app zip
-    app_path = options.app_path
+    app_path = path
     if not app_path:
         app_path = os.path.sep.join([os.getcwd(), "app.zip"])
     import pdb;pdb.set_trace()
@@ -108,30 +147,4 @@ def install_app():
     m.delete_session()
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options] app_name " \
-                                "permission_file", description="app_name "\
-                                "is the name of the app you want to generate " \
-                                "and permission_file is the path to the " \
-                                "permissions file.")
-    # TODO: take in device serial and marionette port, though likely won't be useful
-    parser.add_option("--adb-path", dest="adb_path",
-                        help="path to adb executable. If not passed, we assume"\
-                        " that 'adb' is on the path")
-    parser.add_option("--app-path", dest="app_path",
-                        help="If passed, the app's zip file will be stored at" \
-                        " the given filepath. Otherwise, it will be in the"\
-                        " current working directory as app.zip")
-    parser.add_option("--install", dest="install", default=False,
-                        action="store_true", help="If passed, the app will be" \
-                        " installed on your phone")
-    parser.add_option("--type", dest="type", default="certified",
-                        help="Application type, either 'certified'," \
-                        " 'privileged' or 'web'. Defaults to 'certified'")
-    parser.add_option("--version", dest="version", default="1.3",
-                        help="FxOS version. Defaults to 1.3")
-    (options, args) = parser.parse_args()
-    if len(args) != 2:
-        print "Please pass in the app_name and permission_file"
-        print "Run with --help for more information"
-        sys.exit(1)
-    main(options, args)
+    cli()
