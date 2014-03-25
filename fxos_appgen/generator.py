@@ -53,16 +53,21 @@ def cli():
     with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
+    print "Creating manifest"
     manifest = create_manifest(app_name, permissions, manifest, options.type,
-                               options.version, options.app_path)
+                               options.version)
 
     #TODO : ask for workingdir for temp files
-    package_app(manifest, options.app_path)
+    print "Creating the application's zip file"
+    app_path = package_app(manifest, options.app_path)
 
     if options.install:
-        install_app(options.app_path)
+        print "Installing the app"
+        install_app(app_name, app_path, options.adb_path)
+        print "The application should be on your phone"
+    print "Done."
 
-def create_manifest(app_name, permissions, manifest, app_type, version, path):
+def create_manifest(app_name, permissions, manifest, app_type, version):
     manifest["name"] = app_name
     app_type = app_type.lower()
     if app_type not in APP_TYPES:
@@ -124,7 +129,7 @@ def package_app(manifest, path):
     manifest_path = os.path.sep.join([os.getcwd(), "manifest.webapp"])
     manifest_file = open(manifest_path, "w")
     manifest_file.write(json.dumps(manifest, 
-                        indent=4, separators=(',', ': ')))
+                        indent=4, separators=(",", ": ")))
     manifest_file.close()
 
     index_html = pkg_resources.resource_filename(__name__,
@@ -140,29 +145,38 @@ def package_app(manifest, path):
         zip_file.write(manifest_path, "manifest.webapp")
     os.remove(manifest_path)
 
-def install_app():
-    print "Pushing app to device"
+    return app_path
+
+def install_app(app_name, app_path, adb_path=None):
     dm = None
-    if options.adb_path:
-        dm = mozdevice.DeviceManagerADB(adbPath=options.adb_path)
+    if adb_path:
+        dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
     else:
         dm = mozdevice.DeviceManagerADB()
+
     #TODO: replace with app name
-    if dm.dirExists("/data/local/webapps/certtest-app"):
-        print "CertTest app is already installed"
-        return
-    dm.pushFile("certtest_app.zip", "/data/local/certtest_app.zip")
+    installed_app_name = app_name.lower()
+    installed_app_name = installed_app_name.replace(" ", "-")
+    if dm.dirExists("/data/local/webapps/%s" % installed_app_name):
+        raise Exception("%s is already installed" % app_name)
+        sys.exit(1)
+    app_zip = os.path.basename(app_path)
+    dm.pushFile("%s" % app_path, "/data/local/%s" % app_zip)
     # forward the marionette port
-    print "Forwarding marionette port"
     ret = dm.forward("tcp:2828", "tcp:2828")
     if ret != 0:
-        #TODO: right thing here is to keep trying local ports and pass that value in our config
-        raise Exception("Can't use localhost:2828 for port forwarding. Is something else using port 2828?")
+        raise Exception("Can't use localhost:2828 for port forwarding." \
+                        "Is something else using port 2828?")
+
     # install the app
-    print "installing the app"
-    f = open("app_install.js", "r")
+    install_js = pkg_resources.resource_filename(__name__,
+                                                 os.path.sep.join([
+                                                   'app_install.js']))
+    f = open(install_js, "r")
     script = f.read()
     f.close()
+    script = script.replace("YOURAPPID", installed_app_name)
+    script = script.replace("YOURAPPZIP", app_zip)
     m = Marionette()
     m.start_session()
     m.set_context("chrome")

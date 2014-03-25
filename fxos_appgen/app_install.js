@@ -6,10 +6,10 @@ let { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.j
 let { DebuggerClient } = Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
 
 let gClient, gActor;
-let gAppId = "certtest-app";
+let gAppId = "YOURAPPID";
 
 let onDone = function () {
-  installPackaged(gClient, gActor, "/data/local/certtest_app.zip", gAppId)
+  installPackaged(gClient, gActor, "/data/local/YOURAPPZIP", gAppId)
     .then(function ({ appId }) {
       gClient.close();
       marionetteScriptFinished("finished");
