@@ -8,10 +8,7 @@ permissions
 Requirements
 ============
 
-Your phone must have Marionette installed on it and running on port 2828.
-
-You must also have 'adb' installed.
-
+You must have 'adb' installed.
 If you need to install adb, see
 https://developer.mozilla.org/en-US/Firefox_OS/Debugging/Installing_ADB.
 
@@ -20,6 +17,14 @@ or equivalent file, by adding the following line to the file
 (replacing $SDK_HOME with the location of the android sdk):
 
     PATH=$SDK_HOME:$PATH
+
+Your phone must have Marionette installed on it and running on port 2828. If
+your phone does not have Marionette installed, you can install it using this
+repository: https://github.com/mozilla-b2g/marionette-extension
+
+To forward Marionette's port to 2828, run::
+
+    adb forward tcp:2828 tcp:2828
 
 Setup
 =====
