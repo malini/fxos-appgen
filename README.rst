@@ -3,7 +3,9 @@ FxOS App Generator
 ==================
 
 A tool to generate, and optionally install, an FxOS application with any given
-permissions
+permissions.
+
+You can install this package from pypi as 'fxos_appgen'.
 
 Requirements
 ============
