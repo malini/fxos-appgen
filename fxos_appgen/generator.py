@@ -62,7 +62,24 @@ def cli():
 
 
 def generate_app(app_name, details_file=None, install=False, app_type="certified",
-                 version="1.3", adb_path=None, app_path=None, all_perm=None):
+                 version="1.3", adb_path=None, app_path=None, all_perm=False):
+    """
+    Generates the app and optionally installs it.
+
+    :param app_name: name of the app
+    :param details_file: the path to the json file holding the permissions/details
+    :param install: Optional, if passed as True, we will install the app
+    :param app_type: Optional, type of app. Either "hosted", "certified" or 
+                    "privilged". Default is "certified"
+    :param version: Optional, the b2g version. Default is "1.3"
+    :param adb_path: Optional, path to adb executable. By default, we assume
+                    'adb' is on the path.
+    :param app_path: Optional, if passed, the app's zip file will be
+                     stored at the given location. By default, we will put
+                     it in the current working dirctory as 'app.zip'
+    :param all_perm: Optional, if passed, gives the app all permissions.
+                     By default this is false. 
+    """
     details = create_details(version, details_file, all_perm)
     manifest = create_manifest(app_name, details, app_type,
                                version)
