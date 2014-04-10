@@ -50,12 +50,43 @@ def cli():
     details_file = None
     if len(args) == 2:
         details_file = args[1]
-    if options.all_perm:
+    print "Generating app"
+    generate_app(app_name, details_file=details_file,
+                 install=options.install,
+                 app_type=options.type,
+                 version=options.version,
+                 adb_path=options.adb_path,
+                 app_path=options.app_path,
+                 all_perm=options.all_perm)
+    print "Done."
+
+
+def generate_app(app_name, details_file=None, install=False, app_type="certified",
+                 version="1.3", adb_path=None, app_path=None, all_perm=None):
+    details = create_details(version, details_file, all_perm)
+    manifest = create_manifest(app_name, details, app_type,
+                               version)
+
+    #TODO : ask for workingdir for temp files
+    #Creating the application's zip file
+    app_path = package_app(manifest, app_path)
+
+    if install:
+        install_app(app_name, app_path, adb_path)
+
+
+def create_details(version, details_file=None, all_perms=None):
+    """
+    You need to pass in either a details_file, or all_perms=True,
+    or all_perms=True and a details_file
+    """
+    details = None
+    if all_perms:
         perms = None
         all_perms_file = pkg_resources.resource_filename(__name__,
                                                 os.path.sep.join(
                                                 ["resources",
-                                                 "%s" % options.version,
+                                                 "%s" % version,
                                                  "complete_permissions.json"
                                                  ]))
         with open(all_perms_file, "r") as f:
@@ -70,9 +101,12 @@ def cli():
     else:
         with open(details_file, "r") as f:
             details = json.load(f)
+    return details
 
+
+def create_manifest(app_name, details, app_type, version):
     manifest = None
-    manifest_path = "%s/manifest.webapp" % (options.version)
+    manifest_path = "%s/manifest.webapp" % version
     manifest_path = pkg_resources.resource_filename(__name__,
                                                     os.path.sep.join(
                                                     ["resources",
@@ -80,21 +114,6 @@ def cli():
     with open(manifest_path, "r") as f:
         manifest = json.load(f)
 
-    print "Creating manifest"
-    manifest = create_manifest(app_name, details, manifest, options.type,
-                               options.version)
-
-    #TODO : ask for workingdir for temp files
-    print "Creating the application's zip file"
-    app_path = package_app(manifest, options.app_path)
-
-    if options.install:
-        print "Installing the app"
-        install_app(app_name, app_path, options.adb_path)
-        print "The application should be on your phone"
-    print "Done."
-
-def create_manifest(app_name, details, manifest, app_type, version):
     manifest["name"] = app_name
     app_type = app_type.lower()
     if app_type not in APP_TYPES:
@@ -105,6 +124,7 @@ def create_manifest(app_name, details, manifest, app_type, version):
     if "description" in details:
         manifest["description"] = details["description"]
     manifest["permissions"] = details["permissions"]
+
     # Check if user provided messages
     if "messages" in details:
         manifest["messages"] = details["messages"]
@@ -175,6 +195,7 @@ def package_app(manifest, path):
 
     return app_path
 
+
 def install_app(app_name, app_path, adb_path=None):
     dm = None
     if adb_path:
@@ -211,6 +232,7 @@ def install_app(app_name, app_path, adb_path=None):
     m.set_script_timeout(5000)
     m.execute_async_script(script)
     m.delete_session()
+
 
 if __name__ == "__main__":
     cli()
