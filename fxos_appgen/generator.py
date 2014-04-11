@@ -213,7 +213,7 @@ def package_app(manifest, path):
     return app_path
 
 
-def install_app(app_name, app_path, adb_path=None):
+def install_app(app_name, app_path, adb_path=None, script_timeout=5000):
     dm = None
     if adb_path:
         dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
@@ -246,7 +246,7 @@ def install_app(app_name, app_path, adb_path=None):
     m = Marionette()
     m.start_session()
     m.set_context("chrome")
-    m.set_script_timeout(5000)
+    m.set_script_timeout(script_timeout)
     m.execute_async_script(script)
     m.delete_session()
 
