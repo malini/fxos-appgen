@@ -24,6 +24,9 @@ def cli():
                         help="If passed, the app's zip file will be stored at" \
                         " the given filepath. Otherwise, it will be in the"\
                         " current working directory as app.zip")
+    parser.add_option("--uninstall", dest="uninstall", default=False,
+                        action="store_true", help="If passed, we will uninstall " \
+                        " the app if it was already installed")
     parser.add_option("--install", dest="install", default=False,
                         action="store_true", help="If passed, the app will be" \
                         " installed on your phone")
@@ -50,8 +53,8 @@ def cli():
     details_file = None
     if len(args) == 2:
         details_file = args[1]
-    print "Generating app"
     generate_app(app_name, details_file=details_file,
+                 uninstall=options.uninstall,
                  install=options.install,
                  app_type=options.type,
                  version=options.version,
@@ -61,13 +64,16 @@ def cli():
     print "Done."
 
 
-def generate_app(app_name, details_file=None, install=False, app_type="certified",
-                 version="1.3", adb_path=None, app_path=None, all_perm=False):
+def generate_app(app_name, details_file=None, uninstall=False, install=False,
+                 app_type="certified", version="1.3", adb_path=None,
+                 app_path=None, all_perm=False):
     """
     Generates the app and optionally installs it.
 
     :param app_name: name of the app
     :param details_file: the path to the json file holding the permissions/details
+    :param uninstall: Optional, if passed as True, we uninstall the app if it was
+                    previously installed
     :param install: Optional, if passed as True, we will install the app
     :param app_type: Optional, type of app. Either "hosted", "certified" or 
                     "privilged". Default is "certified"
@@ -88,7 +94,11 @@ def generate_app(app_name, details_file=None, install=False, app_type="certified
     #Creating the application's zip file
     app_path = package_app(manifest, app_path)
 
+    if uninstall:
+        print "Uninstalling app"
+        uninstall_app(app_name, adb_path)
     if install:
+        print "Generating app"
         install_app(app_name, app_path, adb_path)
 
 
@@ -211,6 +221,56 @@ def package_app(manifest, path):
     os.remove(manifest_path)
 
     return app_path
+
+
+def uninstall_app(app_name, adb_path=None, script_timeout=5000):
+    dm = None
+    if adb_path:
+        dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
+    else:
+        dm = mozdevice.DeviceManagerADB()
+
+    installed_app_name = app_name.lower()
+    installed_app_name = installed_app_name.replace(" ", "-")
+    if dm.dirExists("/data/local/webapps/%s" % installed_app_name):
+        ret = dm.forward("tcp:2828", "tcp:2828")
+        if ret != 0:
+            raise Exception("Can't use localhost:2828 for port forwarding." \
+                        "Is something else using port 2828?")
+
+        m = Marionette()
+        m.start_session()
+        uninstall_app = """
+        var uninstallWithName = function(name) {
+            let apps = window.wrappedJSObject.applications || window.wrappedJSObject.Applications;
+            let installedApps = apps.installedApps;
+            for (let manifestURL in installedApps) {
+              let app = installedApps[manifestURL];
+              let origin = null;
+              let entryPoints = app.manifest.entry_points;
+              if (entryPoints) {
+                for (let ep in entryPoints) {
+                  let currentEntryPoint = entryPoints[ep];
+                  let appName = currentEntryPoint.name;
+                  if (name == appName.toLowerCase()) {
+                    window.wrappedJSObject.navigator.mozApps.mgmt.uninstall(app);
+                    return true;
+                  }
+                }
+              } else {
+                let appName = app.manifest.name;
+                if (name == appName.toLowerCase()) {
+                  window.wrappedJSObject.navigator.mozApps.mgmt.uninstall(app);
+                  return true;
+                }
+              }
+            }
+          };
+        return uninstallWithName("%s");
+        """
+        m.set_script_timeout(script_timeout)
+        m.execute_script(uninstall_app % installed_app_name)
+        m.delete_session()
 
 
 def install_app(app_name, app_path, adb_path=None, script_timeout=5000):
