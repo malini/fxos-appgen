@@ -232,45 +232,44 @@ def uninstall_app(app_name, adb_path=None, script_timeout=5000):
 
     installed_app_name = app_name.lower()
     installed_app_name = installed_app_name.replace(" ", "-")
-    if dm.dirExists("/data/local/webapps/%s" % installed_app_name):
-        ret = dm.forward("tcp:2828", "tcp:2828")
-        if ret != 0:
-            raise Exception("Can't use localhost:2828 for port forwarding." \
-                        "Is something else using port 2828?")
+    ret = dm.forward("tcp:2828", "tcp:2828")
+    if ret != 0:
+        raise Exception("Can't use localhost:2828 for port forwarding." \
+                    "Is something else using port 2828?")
 
-        m = Marionette()
-        m.start_session()
-        uninstall_app = """
-        var uninstallWithName = function(name) {
-            let apps = window.wrappedJSObject.applications || window.wrappedJSObject.Applications;
-            let installedApps = apps.installedApps;
-            for (let manifestURL in installedApps) {
-              let app = installedApps[manifestURL];
-              let origin = null;
-              let entryPoints = app.manifest.entry_points;
-              if (entryPoints) {
-                for (let ep in entryPoints) {
-                  let currentEntryPoint = entryPoints[ep];
-                  let appName = currentEntryPoint.name;
-                  if (name == appName.toLowerCase()) {
-                    window.wrappedJSObject.navigator.mozApps.mgmt.uninstall(app);
-                    return true;
-                  }
-                }
-              } else {
-                let appName = app.manifest.name;
-                if (name == appName.toLowerCase()) {
-                  window.wrappedJSObject.navigator.mozApps.mgmt.uninstall(app);
-                  return true;
-                }
+    m = Marionette()
+    m.start_session()
+    uninstall_app = """
+    var uninstallWithName = function(name) {
+        let apps = window.wrappedJSObject.applications || window.wrappedJSObject.Applications;
+        let installedApps = apps.installedApps;
+        for (let manifestURL in installedApps) {
+          let app = installedApps[manifestURL];
+          let origin = null;
+          let entryPoints = app.manifest.entry_points;
+          if (entryPoints) {
+            for (let ep in entryPoints) {
+              let currentEntryPoint = entryPoints[ep];
+              let appName = currentEntryPoint.name;
+              if (name == appName.toLowerCase()) {
+                window.wrappedJSObject.navigator.mozApps.mgmt.uninstall(app);
+                return true;
               }
             }
-          };
-        return uninstallWithName("%s");
-        """
-        m.set_script_timeout(script_timeout)
-        m.execute_script(uninstall_app % app_name.lower())
-        m.delete_session()
+          } else {
+            let appName = app.manifest.name;
+            if (name == appName.toLowerCase()) {
+              window.wrappedJSObject.navigator.mozApps.mgmt.uninstall(app);
+              return true;
+            }
+          }
+        }
+      };
+    return uninstallWithName("%s");
+    """
+    m.set_script_timeout(script_timeout)
+    m.execute_script(uninstall_app % app_name.lower())
+    m.delete_session()
 
 
 def install_app(app_name, app_path, adb_path=None, script_timeout=5000):
