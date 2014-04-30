@@ -269,7 +269,7 @@ def uninstall_app(app_name, adb_path=None, script_timeout=5000):
         return uninstallWithName("%s");
         """
         m.set_script_timeout(script_timeout)
-        m.execute_script(uninstall_app % installed_app_name)
+        m.execute_script(uninstall_app % app_name.lower())
         m.delete_session()
 
 
