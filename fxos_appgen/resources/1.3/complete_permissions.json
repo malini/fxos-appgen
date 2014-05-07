@@ -9,6 +9,7 @@
     "audio-channel-notification":{},
     "audio-channel-ringer":{},
     "audio-channel-telephony":{},
+    "audio-channel-publicnotification":{},
     "background-sensors":{},
     "backgroundservice":{},
     "bluetooth":{},
