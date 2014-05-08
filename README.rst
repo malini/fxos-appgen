@@ -120,9 +120,13 @@ the messages the way you like. Here's an example::
 
 For v1.3 builds:
 https://mxr.mozilla.org/mozilla-b2g28_v1_3/source/dom/messages/SystemMessagePermissionsChecker.jsm#29
+and
+https://github.com/mozilla-b2g/gaia/blob/v1.3/apps/settings/resources/permissions_table.json
 
 For trunk builds:
 https://mxr.mozilla.org/mozilla-central/source/dom/messages/SystemMessagePermissionsChecker.jsm#29 
+and
+https://github.com/mozilla-b2g/gaia/blob/master/apps/settings/resources/permissions_table.json
 
 Datastore Access (optional)
 --------------------------
