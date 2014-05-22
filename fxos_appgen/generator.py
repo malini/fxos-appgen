@@ -52,7 +52,7 @@ def cli():
         sys.exit(1)
 
     if not options.install and options.launch:
-        print "You must specify --install if you wish to launch the app"
+        print "You must also specify --install if you wish to launch the app"
         sys.exit(1)
 
     app_name = args[0]
@@ -82,8 +82,10 @@ def generate_app(app_name, details_file=None, uninstall=False, install=False,
     :param details_file: the path to the json file holding the permissions/details
     :param uninstall: Optional, if passed as True, we uninstall the app if it was
                     previously installed
-    :param install: Optional, if passed as True, we will install the app
-    :param launch: Optional, if passed as True and the app is installed, we will launch the app
+    :param install: Optional, if passed as True, we will install the app.
+                    Must be specified if --launch is used
+    :param launch: Optional, if passed as True and --install is specified,
+                    we will launch the app
     :param app_type: Optional, type of app. Either "hosted", "certified" or 
                     "privilged". Default is "certified"
     :param version: Optional, the b2g version. Default is "1.3"
@@ -244,8 +246,7 @@ def uninstall_app(app_name, adb_path=None, script_timeout=5000):
 
     installed_app_name = app_name.lower()
     installed_app_name = installed_app_name.replace(" ", "-")
-    ret = dm.forward("tcp:2828", "tcp:2828")
-    if ret != 0:
+    if dm.forward("tcp:2828", "tcp:2828") != 0:
         raise Exception("Can't use localhost:2828 for port forwarding." \
                     "Is something else using port 2828?")
 
@@ -276,6 +277,7 @@ def uninstall_app(app_name, adb_path=None, script_timeout=5000):
             }
           }
         }
+        return false;
       };
     return uninstallWithName("%s");
     """
@@ -300,8 +302,7 @@ def install_app(app_name, app_path, adb_path=None, script_timeout=5000):
     app_zip = os.path.basename(app_path)
     dm.pushFile("%s" % app_path, "/data/local/%s" % app_zip)
     # forward the marionette port
-    ret = dm.forward("tcp:2828", "tcp:2828")
-    if ret != 0:
+    if dm.forward("tcp:2828", "tcp:2828") != 0:
         raise Exception("Can't use localhost:2828 for port forwarding." \
                         "Is something else using port 2828?")
 
@@ -330,8 +331,7 @@ def launch_app(app_name, adb_path=None, script_timeout=5000):
 
     installed_app_name = app_name.lower()
     installed_app_name = installed_app_name.replace(" ", "-")
-    ret = dm.forward("tcp:2828", "tcp:2828")
-    if ret != 0:
+    if dm.forward("tcp:2828", "tcp:2828") != 0:
         raise Exception("Can't use localhost:2828 for port forwarding." \
                     "Is something else using port 2828?")
 
@@ -362,6 +362,7 @@ def launch_app(app_name, adb_path=None, script_timeout=5000):
             }
           }
         }
+        return false;
       };
     return launchWithName("%s");
     """
