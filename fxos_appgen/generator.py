@@ -30,6 +30,9 @@ def cli():
     parser.add_option("--install", dest="install", default=False,
                         action="store_true", help="If passed, the app will be" \
                         " installed on your phone")
+    parser.add_option("--launch", dest="launch", default=False,
+                        action="store_true", help="If passed, the app will be" \
+                        " launched on your phone")
     parser.add_option("--type", dest="type", default="certified",
                         help="Application type, either 'certified'," \
                         " 'privileged' or 'web'. Defaults to 'certified'")
@@ -48,6 +51,10 @@ def cli():
         print "Run with --help for more information"
         sys.exit(1)
 
+    if not options.install and options.launch:
+        print "You must specify --install if you wish to launch the app"
+        sys.exit(1)
+
     app_name = args[0]
     details = None
     details_file = None
@@ -56,6 +63,7 @@ def cli():
     generate_app(app_name, details_file=details_file,
                  uninstall=options.uninstall,
                  install=options.install,
+                 launch=options.launch,
                  app_type=options.type,
                  version=options.version,
                  adb_path=options.adb_path,
@@ -65,7 +73,7 @@ def cli():
 
 
 def generate_app(app_name, details_file=None, uninstall=False, install=False,
-                 app_type="certified", version="1.3", adb_path=None,
+                 launch=False, app_type="certified", version="1.3", adb_path=None,
                  app_path=None, all_perm=False):
     """
     Generates the app and optionally installs it.
@@ -75,6 +83,7 @@ def generate_app(app_name, details_file=None, uninstall=False, install=False,
     :param uninstall: Optional, if passed as True, we uninstall the app if it was
                     previously installed
     :param install: Optional, if passed as True, we will install the app
+    :param launch: Optional, if passed as True and the app is installed, we will launch the app
     :param app_type: Optional, type of app. Either "hosted", "certified" or 
                     "privilged". Default is "certified"
     :param version: Optional, the b2g version. Default is "1.3"
@@ -100,6 +109,9 @@ def generate_app(app_name, details_file=None, uninstall=False, install=False,
     if install:
         print "Generating app"
         install_app(app_name, app_path, adb_path)
+    if install and launch:
+        print "Launching app"
+        launch_app(app_name, adb_path)
 
 
 def create_details(version, details_file=None, all_perms=None):
@@ -307,6 +319,54 @@ def install_app(app_name, app_path, adb_path=None, script_timeout=5000):
     m.set_context("chrome")
     m.set_script_timeout(script_timeout)
     m.execute_async_script(script)
+    m.delete_session()
+
+def launch_app(app_name, adb_path=None, script_timeout=5000):
+    dm = None
+    if adb_path:
+        dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
+    else:
+        dm = mozdevice.DeviceManagerADB()
+
+    installed_app_name = app_name.lower()
+    installed_app_name = installed_app_name.replace(" ", "-")
+    ret = dm.forward("tcp:2828", "tcp:2828")
+    if ret != 0:
+        raise Exception("Can't use localhost:2828 for port forwarding." \
+                    "Is something else using port 2828?")
+
+    m = Marionette()
+    m.start_session()
+    launch_app = """
+    var launchWithName = function(name) {
+        let apps = window.wrappedJSObject.applications || window.wrappedJSObject.Applications;
+        let installedApps = apps.installedApps;
+        for (let manifestURL in installedApps) {
+          let app = installedApps[manifestURL];
+          let origin = null;
+          let entryPoints = app.manifest.entry_points;
+          if (entryPoints) {
+            for (let ep in entryPoints) {
+              let currentEntryPoint = entryPoints[ep];
+              let appName = currentEntryPoint.name;
+              if (name == appName.toLowerCase()) {
+                app.launch(); 
+                return true;
+              }
+            }
+          } else {
+            let appName = app.manifest.name;
+            if (name == appName.toLowerCase()) {
+              app.launch();
+              return true;
+            }
+          }
+        }
+      };
+    return launchWithName("%s");
+    """
+    m.set_script_timeout(script_timeout)
+    m.execute_script(launch_app % app_name.lower())
     m.delete_session()
 
 
