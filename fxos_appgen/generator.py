@@ -118,8 +118,9 @@ def generate_app(app_name, details_file=None, uninstall=False, install=False,
 
 def create_details(version, details_file=None, all_perms=None):
     """
-    You need to pass in either a details_file, or all_perms=True,
-    or all_perms=True and a details_file
+    You may pass in either a details_file, or all_perms=True,
+    or all_perms=True and a details_file. Otherwise, the default
+    is to create the details with no permissions.
     """
     details = None
     if all_perms:
@@ -140,8 +141,12 @@ def create_details(version, details_file=None, all_perms=None):
         else:
             details = perms
     else:
-        with open(details_file, "r") as f:
-            details = json.load(f)
+        if details_file:
+            #User has provided us with a details_file
+            with open(details_file, "r") as f:
+                details = json.load(f)
+        else:
+            details = {"permissions": {}}
     return details
 
 
