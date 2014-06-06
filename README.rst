@@ -61,6 +61,15 @@ To modify this behaviour, use the options listed here::
 
     fxos_appgen --help
 
+You can also use its API as python package. For example, if you wish to
+generate and install a simple, all permissions app::
+
+    from fxos_appgen import generate_app
+    generate_app("My App", install=True, version="1.3", all_perm=True)
+
+Please see https://github.com/mozilla-b2g/fxos-appgen/blob/master/fxos_appgen/generator.py
+to learn about the API available.
+
 Details File
 ================
 
