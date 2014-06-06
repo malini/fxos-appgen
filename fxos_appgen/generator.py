@@ -74,7 +74,7 @@ def cli():
 
 def generate_app(app_name, details_file=None, uninstall=False, install=False,
                  launch=False, app_type="certified", version="1.3", adb_path=None,
-                 app_path=None, all_perm=False):
+                 app_path=None, all_perm=False, marionette=None):
     """
     Generates the app and optionally installs it.
 
@@ -107,13 +107,13 @@ def generate_app(app_name, details_file=None, uninstall=False, install=False,
 
     if uninstall:
         print "Uninstalling app"
-        uninstall_app(app_name, adb_path)
+        uninstall_app(app_name, adb_path, marionette=marionette)
     if install:
         print "Generating app"
-        install_app(app_name, app_path, adb_path)
+        install_app(app_name, app_path, adb_path, marionette=marionette)
     if install and launch:
         print "Launching app"
-        launch_app(app_name, adb_path)
+        launch_app(app_name, adb_path, marionette=marionette)
 
 
 def create_details(version, details_file=None, all_perms=None):
@@ -242,7 +242,7 @@ def package_app(manifest, path):
     return app_path
 
 
-def uninstall_app(app_name, adb_path=None, script_timeout=5000):
+def uninstall_app(app_name, adb_path=None, script_timeout=5000, marionette=None):
     dm = None
     if adb_path:
         dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
@@ -255,8 +255,12 @@ def uninstall_app(app_name, adb_path=None, script_timeout=5000):
         raise Exception("Can't use localhost:2828 for port forwarding." \
                     "Is something else using port 2828?")
 
-    m = Marionette()
-    m.start_session()
+    if not marionette:
+        m = Marionette()
+        m.start_session()
+    else: 
+        m = marionette
+        m.switch_to_frame()
     uninstall_app = """
     var uninstallWithName = function(name) {
         let apps = window.wrappedJSObject.applications || window.wrappedJSObject.Applications;
@@ -288,10 +292,11 @@ def uninstall_app(app_name, adb_path=None, script_timeout=5000):
     """
     m.set_script_timeout(script_timeout)
     m.execute_script(uninstall_app % app_name.lower())
-    m.delete_session()
+    if not marionette:
+        m.delete_session()
 
 
-def install_app(app_name, app_path, adb_path=None, script_timeout=5000):
+def install_app(app_name, app_path, adb_path=None, script_timeout=5000, marionette=None):
     dm = None
     if adb_path:
         dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
@@ -320,14 +325,21 @@ def install_app(app_name, app_path, adb_path=None, script_timeout=5000):
     f.close()
     script = script.replace("YOURAPPID", installed_app_name)
     script = script.replace("YOURAPPZIP", app_zip)
-    m = Marionette()
-    m.start_session()
+    if not marionette:
+        m = Marionette()
+        m.start_session()
+    else: 
+        m = marionette
+        m.switch_to_frame()
     m.set_context("chrome")
     m.set_script_timeout(script_timeout)
     m.execute_async_script(script)
-    m.delete_session()
+    if not marionette:
+        m.delete_session()
+    else:
+        m.set_context("content")
 
-def launch_app(app_name, adb_path=None, script_timeout=5000):
+def launch_app(app_name, adb_path=None, script_timeout=5000, marionette=None):
     dm = None
     if adb_path:
         dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
@@ -340,8 +352,12 @@ def launch_app(app_name, adb_path=None, script_timeout=5000):
         raise Exception("Can't use localhost:2828 for port forwarding." \
                     "Is something else using port 2828?")
 
-    m = Marionette()
-    m.start_session()
+    if not marionette:
+        m = Marionette()
+        m.start_session()
+    else: 
+        m = marionette
+        m.switch_to_frame()
     launch_app = """
     var launchWithName = function(name) {
         let apps = window.wrappedJSObject.applications || window.wrappedJSObject.Applications;
@@ -373,7 +389,8 @@ def launch_app(app_name, adb_path=None, script_timeout=5000):
     """
     m.set_script_timeout(script_timeout)
     m.execute_script(launch_app % app_name.lower())
-    m.delete_session()
+    if not marionette:
+        m.delete_session()
 
 
 if __name__ == "__main__":
