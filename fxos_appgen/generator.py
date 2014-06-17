@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+
 from marionette import Marionette
 import mozdevice
 
@@ -17,7 +21,7 @@ def cli():
                                 "and permission_file is the path to the " \
                                 "details file.")
     # TODO: take in device serial and marionette port, though likely won't be useful
-    parser.add_option("--adb-path", dest="adb_path",
+    parser.add_option("--adb-path", dest="adb_path", default="adb",
                         help="path to adb executable. If not passed, we assume"\
                         " that 'adb' is on the path")
     parser.add_option("--app-path", dest="app_path",
@@ -73,7 +77,7 @@ def cli():
 
 
 def generate_app(app_name, details_file=None, uninstall=False, install=False,
-                 launch=False, app_type="certified", version="1.3", adb_path=None,
+                 launch=False, app_type="certified", version="1.3", adb_path="adb",
                  app_path=None, all_perm=False, marionette=None):
     """
     Generates the app and optionally installs it.
@@ -242,13 +246,8 @@ def package_app(manifest, path):
     return app_path
 
 
-def uninstall_app(app_name, adb_path=None, script_timeout=5000, marionette=None):
-    dm = None
-    if adb_path:
-        dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
-    else:
-        dm = mozdevice.DeviceManagerADB()
-
+def uninstall_app(app_name, adb_path="adb", script_timeout=5000, marionette=None):
+    dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
     installed_app_name = app_name.lower()
     installed_app_name = installed_app_name.replace(" ", "-")
     if dm.forward("tcp:2828", "tcp:2828") != 0:
@@ -296,20 +295,20 @@ def uninstall_app(app_name, adb_path=None, script_timeout=5000, marionette=None)
         m.delete_session()
 
 
-def install_app(app_name, app_path, adb_path=None, script_timeout=5000, marionette=None):
-    dm = None
-    if adb_path:
-        dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
-    else:
-        dm = mozdevice.DeviceManagerADB()
+def is_installed(app_name, adb_path="adb"):
+    """Check if given `app_name` is installed on the attached device."""
+    dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
+    installed_app_name = app_name.lower().replace(" ", "-")
+    return dm.dirExists("/data/local/webapps/%s" % installed_app_name)
 
-    #TODO: replace with app name
-    installed_app_name = app_name.lower()
-    installed_app_name = installed_app_name.replace(" ", "-")
-    if dm.dirExists("/data/local/webapps/%s" % installed_app_name):
+
+def install_app(app_name, app_path, adb_path="adb", script_timeout=5000, marionette=None):
+    if is_installed(app_name, adb_path=adb_path):
         raise Exception("%s is already installed" % app_name)
         sys.exit(1)
+
     app_zip = os.path.basename(app_path)
+    dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
     dm.pushFile("%s" % app_path, "/data/local/%s" % app_zip)
     # forward the marionette port
     if dm.forward("tcp:2828", "tcp:2828") != 0:
@@ -320,11 +319,12 @@ def install_app(app_name, app_path, adb_path=None, script_timeout=5000, marionet
     install_js = pkg_resources.resource_filename(__name__,
                                                  os.path.sep.join([
                                                    'app_install.js']))
-    f = open(install_js, "r")
-    script = f.read()
-    f.close()
+    with open(install_js, "r") as f:
+        script = f.read()
+    installed_app_name = app_name.lower().replace(" ", "-")
     script = script.replace("YOURAPPID", installed_app_name)
     script = script.replace("YOURAPPZIP", app_zip)
+
     if not marionette:
         m = Marionette()
         m.start_session()
@@ -339,13 +339,8 @@ def install_app(app_name, app_path, adb_path=None, script_timeout=5000, marionet
     else:
         m.set_context("content")
 
-def launch_app(app_name, adb_path=None, script_timeout=5000, marionette=None):
-    dm = None
-    if adb_path:
-        dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
-    else:
-        dm = mozdevice.DeviceManagerADB()
-
+def launch_app(app_name, adb_path="adb", script_timeout=5000, marionette=None):
+    dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
     installed_app_name = app_name.lower()
     installed_app_name = installed_app_name.replace(" ", "-")
     if dm.forward("tcp:2828", "tcp:2828") != 0:
