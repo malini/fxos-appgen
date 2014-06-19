@@ -1,0 +1,78 @@
+{
+  "permissions": {
+    "alarms": {},
+    "attention": {},
+    "audio-capture": {},
+    "audio-channel-alarm": {},
+    "audio-channel-content": {},
+    "audio-channel-normal": {},
+    "audio-channel-notification": {},
+    "audio-channel-publicnotification": {},
+    "audio-channel-ringer": {},
+    "audio-channel-telephony": {},
+    "background-sensors": {},
+    "backgroundservice": {},
+    "bluetooth": {},
+    "browser": {},
+    "camera": {},
+    "cellbroadcast": {},
+    "contacts": {
+      "access": "readwritecreate"
+    },
+    "deprecated-hwvideo": {},
+    "desktop-notification": {},
+    "device-storage:apps": {
+      "access": "read"
+    },
+    "device-storage:crashes": {
+      "access": "read"
+    },
+    "device-storage:music": {
+      "access": "readwritecreate"
+    },
+    "device-storage:pictures": {
+      "access": "readwritecreate"
+    },
+    "device-storage:sdcard": {
+      "access": "readwritecreate"
+    },
+    "device-storage:videos": {
+      "access": "readwritecreate"
+    },
+    "downloads": {},
+    "embed-apps": {},
+    "fmradio": {},
+    "geolocation": {},
+    "idle": {},
+    "input": {},
+    "input-manage": {},
+    "mobileconnection": {},
+    "mobilenetwork": {},
+    "network-events": {},
+    "networkstats-manage": {},
+    "nfc": {
+      "access": "readwrite"
+    },
+    "nfc-manager": {},
+    "open-remote-window": {},
+    "permissions": {},
+    "phonenumberservice": {},
+    "power": {},
+    "push": {},
+    "settings": {
+      "access": "readwrite"
+    },
+    "sms": {},
+    "speaker-control": {},
+    "storage": {},
+    "systemXHR": {},
+    "tcp-socket": {},
+    "telephony": {},
+    "time": {},
+    "video-capture": {},
+    "voicemail": {},
+    "wappush": {},
+    "webapps-manage": {},
+    "wifi-manage": {}
+  }
+}
