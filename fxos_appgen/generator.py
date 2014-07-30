@@ -82,6 +82,9 @@ def generate_app(app_name, details_file=None, uninstall=False, install=False,
     """
     Generates the app and optionally installs it.
 
+    NOTE: if a marionette session is passed, this function switches to
+    'content' context and will be at the top-most frame.
+
     :param app_name: name of the app
     :param details_file: the path to the json file holding the permissions/details
     :param uninstall: Optional, if passed as True, we uninstall the app if it was
@@ -247,6 +250,11 @@ def package_app(manifest, path):
 
 
 def uninstall_app(app_name, adb_path="adb", script_timeout=5000, marionette=None):
+    """
+    Uninstalls the given app.
+
+    NOTE: if a marionette session is passed, this function switches to the top-most frame.
+    """
     dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
     installed_app_name = app_name.lower()
     installed_app_name = installed_app_name.replace(" ", "-")
@@ -303,6 +311,12 @@ def is_installed(app_name, adb_path="adb"):
 
 
 def install_app(app_name, app_path, adb_path="adb", script_timeout=5000, marionette=None):
+    """
+    This installs the given application.
+
+    NOTE: if a marionette session is passed, this function switches to
+    'content' context and will be at the top-most frame.
+    """
     if is_installed(app_name, adb_path=adb_path):
         raise Exception("%s is already installed" % app_name)
         sys.exit(1)
@@ -340,6 +354,10 @@ def install_app(app_name, app_path, adb_path="adb", script_timeout=5000, marione
         m.set_context("content")
 
 def launch_app(app_name, adb_path="adb", script_timeout=5000, marionette=None):
+    """
+    Launches the given app
+    NOTE: if a marionette session is passed, this function switches to the top-most frame.
+    """
     dm = mozdevice.DeviceManagerADB(adbPath=adb_path)
     installed_app_name = app_name.lower()
     installed_app_name = installed_app_name.replace(" ", "-")
